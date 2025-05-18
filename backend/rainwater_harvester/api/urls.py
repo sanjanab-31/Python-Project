@@ -18,6 +18,6 @@ urlpatterns = [
     path('save-results/', SaveResultsView.as_view(), name='save-results'),
     path('historical-data/', HistoricalDataView.as_view(), name='historical-data'),
     path('settings/', SettingsView.as_view(), name='settings'),
-    path('saved-results/', DeleteSavedResultsView.as_view(), name='delete-saved-results'),
+    path('saved-results/<str:result_id>/', DeleteSavedResultsView.as_view(), name='delete-saved-results'),
     path('weather/', WeatherView.as_view(), name='weather'),
 ]
