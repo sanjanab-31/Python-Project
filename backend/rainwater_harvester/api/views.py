@@ -236,48 +236,42 @@ class DeleteSavedResultsView(APIView):
     """
     API view for deleting saved results.
     """
-    def delete(self, request):
+    def delete(self, request, result_id=None):
         """
         Delete a saved result by ID.
         """
-        serializer = ResultIdSerializer(data=request.query_params)
+        if not result_id:
+            return Response(
+                {'message': 'Result ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        if serializer.is_valid():
-            try:
-                result_id = serializer.validated_data.get('id')
-                
-                if not result_id:
-                    return Response(
-                        {'message': 'Result ID is required'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                try:
-                    # Delete result from database
-                    result = CalculationResult.objects.filter(id=result_id).first()
-                    if result:
-                        result.delete()
-                        return Response({'message': 'Result deleted successfully'}, status=status.HTTP_200_OK)
-                    else:
-                        return Response({'message': 'Result not found'}, status=status.HTTP_404_NOT_FOUND)
-                except ValueError:
-                    return Response(
-                        {'message': 'Invalid result ID format'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+        try:
+            # Try to find and delete from HistoricalData first
+            historical_data = HistoricalData.objects.filter(id=result_id).first()
+            if historical_data:
+                historical_data.delete()
+                return Response({'message': 'Result deleted successfully'}, status=status.HTTP_200_OK)
             
-            except Exception as e:
-                logger.error(f"Error deleting result: {str(e)}")
-                return Response(
-                    {
-                        'error': 'An error occurred while deleting the result.',
-                        'details': str(e),
-                        'message': 'This could be due to a database connection issue or an invalid result ID.'
-                    }, 
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # If not found in HistoricalData, try CalculationResult
+            calculation_result = CalculationResult.objects.filter(id=result_id).first()
+            if calculation_result:
+                calculation_result.delete()
+                return Response({'message': 'Result deleted successfully'}, status=status.HTTP_200_OK)
+            
+            # If not found in either table
+            return Response({'message': 'Result not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            logger.error(f"Error deleting result: {str(e)}")
+            return Response(
+                {
+                    'error': 'An error occurred while deleting the result.',
+                    'details': str(e),
+                    'message': 'This could be due to a database connection issue or an invalid result ID.'
+                }, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class WeatherView(APIView):
     """
