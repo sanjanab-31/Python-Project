@@ -118,18 +118,20 @@ const apiService = {
       if (!resultId) {
         throw new Error('Result ID is required');
       }
-      const response = await api.delete(`/saved-results/?id=${resultId}`);
-      return response.data;
+      const response = await api.delete(`/saved-results/${resultId}`);
+      if (response.status === 200) {
+        return response.data;
+      }
+      throw new Error(response.data?.message || 'Failed to delete result');
     } catch (error) {
       console.error('Error deleting saved results:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
+                          error.message ||
                           'An error occurred while deleting saved results.';
-
-                          throw new Error(errorMessage);
+      throw new Error(errorMessage);
     }
   },
-
   // Weather data
   getWeatherData: async (location) => {
     try {
