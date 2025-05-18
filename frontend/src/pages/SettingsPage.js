@@ -30,8 +30,13 @@ const SettingsPage = () => {
         
         // Fetch saved results
         const historicalData = await apiService.getHistoricalData();
-        if (historicalData) {
-          setSavedResults(historicalData);
+        if (historicalData && Array.isArray(historicalData)) {
+          // Ensure each result has an ID
+          const resultsWithIds = historicalData.map(result => ({
+            ...result,
+            id: result.id || result._id || Date.now() + Math.random().toString(36).substr(2, 9)
+          }));
+          setSavedResults(resultsWithIds);
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
@@ -67,14 +72,24 @@ const SettingsPage = () => {
   };
 
   const handleDeleteResult = async (resultId) => {
+    if (!resultId) {
+      setDeleteStatus('Cannot delete result: Missing ID');
+      return;
+    }
+
     try {
-      await apiService.deleteSavedResults(resultId);
-      setSavedResults(savedResults.filter(result => result.id !== resultId));
-      setDeleteStatus('Result deleted successfully!');
+      const response = await apiService.deleteSavedResults(resultId);
+      // Only remove from UI if delete was successful
+      if (response && response.message === 'Result deleted successfully') {
+        setSavedResults(savedResults.filter(result => result.id !== resultId));
+        setDeleteStatus('Result deleted successfully!');
+      } else {
+        setDeleteStatus('Failed to delete result. Please try again.');
+      }
       setTimeout(() => setDeleteStatus(''), 3000);
     } catch (error) {
       console.error('Error deleting result:', error);
-      setDeleteStatus('Failed to delete result. Please try again.');
+      setDeleteStatus(error.message || 'Failed to delete result. Please try again.');
       setTimeout(() => setDeleteStatus(''), 3000);
     }
   };
@@ -282,7 +297,11 @@ const SettingsPage = () => {
                     <td style={{ padding: '0.5rem' }}>
                       <button 
                         className="btn btn-danger" 
-                        onClick={() => handleDeleteResult(result.id)}
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this result?')) {
+                            handleDeleteResult(result.id);
+                          }
+                        }}
                         style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
                       >
                         Delete
