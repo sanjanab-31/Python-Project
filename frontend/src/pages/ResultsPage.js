@@ -69,12 +69,26 @@ const ResultsPage = () => {
     if (!results) return;
 
     try {
-      await apiService.saveResults(results);
+      // Format the data for saving
+      const dataToSave = {
+        location: inputs.location,
+        inflow: inflow.dailyInflow,
+        outflow: inputs.outflow,
+        tankCapacity: inputs.tankCapacity,
+        waterUsage: waterUsage,
+        roi: roi,
+        leakDetection: leakDetection,
+        maintenanceSchedule: maintenanceSchedule,
+        weatherData: weatherData
+      };
+
+      const response = await apiService.saveResults(dataToSave);
+      console.log('Save response:', response);
       setSaveStatus('Results saved successfully!');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
       console.error('Error saving results:', error);
-      setSaveStatus('Failed to save results. Please try again.');
+      setSaveStatus(error.message || 'Failed to save results. Please try again.');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };

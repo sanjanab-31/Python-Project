@@ -23,9 +23,9 @@ const SettingsPage = () => {
     const fetchSettings = async () => {
       try {
         // Fetch user settings
-        const settingsResponse = await apiService.getResults();
-        if (settingsResponse && settingsResponse.settings) {
-          setSettings(settingsResponse.settings);
+        const settingsResponse = await apiService.getSettings();
+        if (settingsResponse) {
+          setSettings(settingsResponse);
         }
         
         // Fetch saved results
@@ -290,10 +290,10 @@ const SettingsPage = () => {
                 {savedResults.map((result) => (
                   <tr key={result.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '0.5rem' }}>{new Date(result.timestamp).toLocaleDateString()}</td>
-                    <td style={{ padding: '0.5rem' }}>{result.location}</td>
-                    <td style={{ padding: '0.5rem' }}>{result.inflow.toFixed(2)}</td>
-                    <td style={{ padding: '0.5rem' }}>{result.outflow.toFixed(2)}</td>
-                    <td style={{ padding: '0.5rem' }}>{result.tankCapacity}</td>
+                    <td style={{ padding: '0.5rem' }}>{result.location || 'N/A'}</td>
+                    <td style={{ padding: '0.5rem' }}>{result.inflow ? result.inflow.toFixed(2) : 'N/A'}</td>
+                    <td style={{ padding: '0.5rem' }}>{result.outflow ? result.outflow.toFixed(2) : 'N/A'}</td>
+                    <td style={{ padding: '0.5rem' }}>{result.tankCapacity || 'N/A'}</td>
                     <td style={{ padding: '0.5rem' }}>
                       <button 
                         className="btn btn-danger" 

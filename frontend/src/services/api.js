@@ -98,6 +98,19 @@ const apiService = {
   },
 
   // User settings
+  getSettings: async () => {
+    try {
+      const response = await api.get('/settings/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'An error occurred while fetching settings.';
+      throw new Error(errorMessage);
+    }
+  },
+
   updateSettings: async (settingsData) => {
     try {
       const response = await api.put('/settings/', settingsData);
@@ -107,7 +120,6 @@ const apiService = {
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'An error occurred while updating settings.';
-      // Create a proper Error object
       throw new Error(errorMessage);
     }
   },
@@ -115,23 +127,17 @@ const apiService = {
   // Delete saved results
   deleteSavedResults: async (resultId) => {
     try {
-      if (!resultId) {
-        throw new Error('Result ID is required');
-      }
-      const response = await api.delete(`/saved-results/${resultId}`);
-      if (response.status === 200) {
-        return response.data;
-      }
-      throw new Error(response.data?.message || 'Failed to delete result');
+      const response = await api.delete(`/historical-data/${resultId}/`);
+      return response.data;
     } catch (error) {
-      console.error('Error deleting saved results:', error);
+      console.error('Error deleting result:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
-                          error.message ||
-                          'An error occurred while deleting saved results.';
+                          'An error occurred while deleting the result.';
       throw new Error(errorMessage);
     }
   },
+
   // Weather data
   getWeatherData: async (location) => {
     try {

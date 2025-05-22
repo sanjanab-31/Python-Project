@@ -4,17 +4,15 @@ __pycache__/
 *$py.class
 *.so
 .Python
-.env
-.venv
-env/
+# Environment files
+.env.production
+.env.staging
 venv/
 ENV/
 env.bak/
 venv.bak/
 *.log
-db.sqlite3
-*.sqlite3
-
+# No database files needed
 # Node.js
 node_modules/
 npm-debug.log*

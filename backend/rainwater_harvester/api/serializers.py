@@ -20,13 +20,7 @@ class SettingsSerializer(serializers.Serializer):
     """
     Serializer for user settings.
     """
-    defaultRoofArea = serializers.FloatField(required=False, allow_null=True)
-    defaultOutflow = serializers.FloatField(required=False, allow_null=True)
-    defaultLocation = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    defaultTankCapacity = serializers.FloatField(required=False, allow_null=True)
-    enableEmailAlerts = serializers.BooleanField(required=False, default=False)
-    emailAddress = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
-    alertForLeaks = serializers.BooleanField(required=False, default=True)
+    data = serializers.JSONField()
     alertForCleaning = serializers.BooleanField(required=False, default=True)
 
 class ResultIdSerializer(serializers.Serializer):

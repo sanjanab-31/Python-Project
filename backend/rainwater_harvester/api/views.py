@@ -7,10 +7,21 @@ from rest_framework.response import Response
 from rest_framework import status
 import json
 import logging
+from pymongo import MongoClient
+from django.conf import settings
 from .serializers import InputSerializer, SettingsSerializer, ResultIdSerializer
 from .calculation_service import process_inputs
 from .weather_service import get_weather_forecast
-from .models import UserInput, CalculationResult, HistoricalData, UserSettings
+
+# MongoDB setup
+client = MongoClient(settings.MONGODB_URI)
+db = client[settings.MONGODB_NAME]
+
+# MongoDB collections
+user_inputs = db['user_inputs']
+calculation_results = db['calculation_results']
+historical_data = db['historical_data']
+user_settings = db['user_settings']
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -34,9 +45,9 @@ class InputsView(APIView):
                 
                 logger.info(f"Validated input data: {input_data}")
                 
-                # Save inputs to database
-                user_input = UserInput.objects.create(data=input_data)
-                input_id = user_input.id
+                # Save inputs to database using MongoDB directly
+                result = db.user_inputs.insert_one(input_data)
+                input_id = str(result.inserted_id)
                 logger.info(f"Input data saved to database with ID: {input_id}")
                 
                 # Add input ID to input data
@@ -48,12 +59,14 @@ class InputsView(APIView):
                 # Add input ID to results
                 results['input_id'] = input_id
                 
-                # Save results
-                result = CalculationResult.objects.create(
-                    input_data=user_input,
-                    data=results
-                )
-                logger.info("Results saved to database")
+                # Save results using MongoDB directly
+                result_doc = {
+                    'timestamp': datetime.now().isoformat(),
+                    'input_data': input_data,
+                    'data': results
+                }
+                result = db.calculation_results.insert_one(result_doc)
+                logger.info(f"Results saved to database with ID: {result.inserted_id}")
                 
                 return Response(results, status=status.HTTP_200_OK)
             except Exception as e:
@@ -84,16 +97,16 @@ class ResultsView(APIView):
             
             if user_input_id:
                 logger.info(f"Fetching results for user_input_id: {user_input_id}")
-                result = CalculationResult.objects.filter(input_data__id=user_input_id).last()
+                result = db.calculation_results.find_one({'input_data._id': user_input_id})
                 if result:
-                    return Response(result.data, status=status.HTTP_200_OK)
+                    return Response(result['data'], status=status.HTTP_200_OK)
                 else:
                     return Response({'message': 'No results found for the given input ID'}, status=status.HTTP_404_NOT_FOUND)
             else:
                 logger.info("Fetching latest results")
-                result = CalculationResult.objects.last()
+                result = db.calculation_results.find_one(sort=[('timestamp', -1)])
                 if result:
-                    return Response(result.data, status=status.HTTP_200_OK)
+                    return Response(result['data'], status=status.HTTP_200_OK)
                 else:
                     return Response({'message': 'No results found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -117,26 +130,73 @@ class SaveResultsView(APIView):
         Save calculation results to historical data.
         """
         try:
-            # Extract key data for historical analysis
+            # Validate request data
+            if not request.data:
+                return Response(
+                    {
+                        'message': 'No data provided',
+                        'details': 'Request body is empty'
+                    }, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             data = request.data
             
-            historical_data = {
+            # Extract key data for historical analysis
+            historical_entry = {
                 'timestamp': datetime.now().isoformat(),
-                'location': data.get('inputs', {}).get('location', ''),
-                'roofArea': data.get('inputs', {}).get('roofArea', 0),
-                'tankCapacity': data.get('inputs', {}).get('tankCapacity', 0),
-                'inflow': data.get('inflow', {}).get('dailyInflow', 0),
-                'outflow': data.get('inputs', {}).get('outflow', 0),
-                'rainfall': data.get('weatherData', {}).get('averageRainfall', 0),
-                'currentLevel': data.get('inputs', {}).get('tankCapacity', 0) * 0.5,  # Assume 50% for now
+                'location': data.get('location', ''),
+                'inflow': float(data.get('inflow', 0)),
+                'outflow': float(data.get('outflow', 0)),
+                'tankCapacity': float(data.get('tankCapacity', 0)),
                 'waterUsage': data.get('waterUsage', {}),
-                'isLeaking': data.get('leakDetection', {}).get('isLeaking', False)
+                'roi': data.get('roi', {}),
+                'leakDetection': data.get('leakDetection', {}),
+                'maintenanceSchedule': data.get('maintenanceSchedule', []),
+                'weatherData': data.get('weatherData', {})
             }
             
-            # Save to historical data collection
-            HistoricalData.objects.create(data=historical_data)
+            # Validate required fields
+            required_fields = ['location', 'inflow', 'outflow', 'tankCapacity']
+            missing_fields = [field for field in required_fields if not historical_entry.get(field)]
             
-            return Response({'message': 'Results saved successfully'}, status=status.HTTP_201_CREATED)
+            if missing_fields:
+                return Response(
+                    {
+                        'message': f'Missing required fields: {missing_fields}',
+                        'details': 'Please provide all required fields',
+                        'required_fields': required_fields
+                    }, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Save to MongoDB
+            result = historical_data.insert_one(historical_entry)
+            logger.info(f"Results saved to historical data with ID: {result.inserted_id}")
+            
+            # Return saved document
+            saved_doc = historical_data.find_one({'_id': result.inserted_id})
+            if saved_doc:
+                saved_doc['_id'] = str(saved_doc['_id'])  # Convert ObjectId to string
+            
+            return Response(
+                {
+                    'message': 'Results saved successfully',
+                    'data': saved_doc
+                }, 
+                status=status.HTTP_201_CREATED
+            )
+        
+        except ValueError as e:
+            logger.error(f"Invalid numeric value: {str(e)}")
+            return Response(
+                {
+                    'error': 'Invalid numeric value.',
+                    'details': str(e),
+                    'message': 'Please ensure all numeric fields contain valid numbers.'
+                }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         except Exception as e:
             logger.error(f"Error saving results: {str(e)}")
@@ -151,7 +211,7 @@ class SaveResultsView(APIView):
 
 class HistoricalDataView(APIView):
     """
-    API view for retrieving historical data.
+    API view for retrieving and managing historical data.
     """
     def get(self, request):
         """
@@ -159,14 +219,54 @@ class HistoricalDataView(APIView):
         """
         try:
             # Get historical data from database
-            historical_data = list(HistoricalData.objects.order_by('-timestamp').values('data'))
-            return Response([item['data'] for item in historical_data], status=status.HTTP_200_OK)
+            data = list(historical_data.find().sort('timestamp', -1))
+            # Convert ObjectId to string for JSON serialization
+            for item in data:
+                item['_id'] = str(item['_id'])
+            return Response(data, status=status.HTTP_200_OK)
         
         except Exception as e:
             logger.error(f"Error retrieving historical data: {str(e)}")
             return Response(
                 {
                     'error': 'An error occurred while retrieving historical data.',
+                    'details': str(e),
+                    'message': 'This could be due to a database connection issue. Please check your database connection and try again.'
+                }, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    def delete(self, request, result_id=None):
+        """
+        Delete a specific historical data entry.
+        """
+        try:
+            if not result_id:
+                return Response(
+                    {'message': 'Result ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            # Delete the result from MongoDB
+            from bson.objectid import ObjectId
+            result = historical_data.delete_one({'_id': ObjectId(result_id)})
+            
+            if result.deleted_count > 0:
+                return Response(
+                    {'message': 'Result deleted successfully'}, 
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {'message': 'Result not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                
+        except Exception as e:
+            logger.error(f"Error deleting historical data: {str(e)}")
+            return Response(
+                {
+                    'error': 'An error occurred while deleting the result.',
                     'details': str(e),
                     'message': 'This could be due to a database connection issue. Please check your database connection and try again.'
                 }, 
@@ -183,9 +283,9 @@ class SettingsView(APIView):
         """
         try:
             # Get settings from database
-            settings = UserSettings.objects.first()
+            settings = user_settings.find_one()
             if settings:
-                return Response(settings.data, status=status.HTTP_200_OK)
+                return Response(settings, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "No settings found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -210,15 +310,13 @@ class SettingsView(APIView):
             try:
                 # Add timestamp to settings data
                 settings_data = serializer.validated_data
-                settings_data['timestamp'] = datetime.now().isoformat()
+                settings_data['last_updated'] = datetime.now().isoformat()
                 
-                # Save settings to database
-                settings, created = UserSettings.objects.get_or_create(id=1)
-                settings.data = settings_data
-                settings.save()
+                # Update or insert settings
+                result = user_settings.replace_one({}, settings_data, upsert=True)
+                logger.info(f"Settings updated successfully")
                 
-                return Response({'message': 'Settings updated successfully'}, status=status.HTTP_200_OK)
-            
+                return Response(settings_data, status=status.HTTP_200_OK)
             except Exception as e:
                 logger.error(f"Error updating settings: {str(e)}")
                 return Response(
@@ -229,49 +327,7 @@ class SettingsView(APIView):
                     }, 
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class DeleteSavedResultsView(APIView):
-    """
-    API view for deleting saved results.
-    """
-    def delete(self, request, result_id=None):
-        """
-        Delete a saved result by ID.
-        """
-        if not result_id:
-            return Response(
-                {'message': 'Result ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            # Try to find and delete from HistoricalData first
-            historical_data = HistoricalData.objects.filter(id=result_id).first()
-            if historical_data:
-                historical_data.delete()
-                return Response({'message': 'Result deleted successfully'}, status=status.HTTP_200_OK)
-            
-            # If not found in HistoricalData, try CalculationResult
-            calculation_result = CalculationResult.objects.filter(id=result_id).first()
-            if calculation_result:
-                calculation_result.delete()
-                return Response({'message': 'Result deleted successfully'}, status=status.HTTP_200_OK)
-            
-            # If not found in either table
-            return Response({'message': 'Result not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-        except Exception as e:
-            logger.error(f"Error deleting result: {str(e)}")
-            return Response(
-                {
-                    'error': 'An error occurred while deleting the result.',
-                    'details': str(e),
-                    'message': 'This could be due to a database connection issue or an invalid result ID.'
-                }, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
 class WeatherView(APIView):
     """

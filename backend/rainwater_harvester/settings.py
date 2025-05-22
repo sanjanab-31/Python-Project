@@ -66,18 +66,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rainwater_harvester.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# Using MongoDB for data storage
+# MongoDB configuration
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 MONGODB_NAME = os.getenv('MONGODB_NAME', 'rainwater_harvester')
 
-# Default Django database for all data
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': MONGODB_NAME,
+        'CLIENT': {
+            'host': MONGODB_URI,
+        }
     }
 }
 
