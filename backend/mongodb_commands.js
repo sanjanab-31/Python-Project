@@ -1,14 +1,31 @@
-// Switch to our database
-use rainwater_harvester
+const { MongoClient } = require('mongodb');
 
-// Show all collections
-show collections
-
-// View all user inputs
-db.user_inputs.find().pretty()
-
-// View all historical data
-db.historical_data.find().pretty()
+async function connectToDatabase() {
+    const uri = 'mongodb://localhost:27017';
+    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    
+    try {
+        await client.connect();
+        const db = client.db('rainwater_harvester');
+        
+        // List all collections
+        const collections = await db.listCollections().toArray();
+        console.log('Collections:', collections);
+        
+        // Get all user inputs
+        const userInputs = await db.collection('user_inputs').find({}).toArray();
+        console.log('User Inputs:', userInputs);
+        
+        // Get all historical data
+        const historicalData = await db.collection('historical_data').find({}).toArray();
+        console.log('Historical Data:', historicalData);
+        
+    } catch (error) {
+        console.error('Error:', error);
+    } finally {
+        await client.close();
+    }
+}
 
 // View user settings
 db.user_settings.find().pretty()
