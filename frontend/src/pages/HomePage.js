@@ -1,64 +1,108 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../styles/HomePage.css';
+// Add Material Icons CSS
+import '@fontsource/material-icons';
 
 const HomePage = () => {
   return (
     <div className="container">
-      <section className="card">
-        <h1>Smart Rainwater Harvesting Optimizer</h1>
-        <p>
-          Welcome to the Smart Rainwater Harvesting Optimizer, a comprehensive platform designed to help you maximize the efficiency of your rainwater harvesting system. Our advanced tools provide real-time calculations, weather integration, and AI-driven recommendations to optimize your water usage and maintenance.
-        </p>
-        <div style={{ marginTop: '2rem' }}>
-          <Link to="/input" className="btn btn-primary" style={{ marginRight: '1rem' }}>
-            Get Started
-          </Link>
-          <Link to="/analysis" className="btn btn-secondary">
-            View Analysis
-          </Link>
+      <section className="hero-section">
+        <div className="hero-overlay"></div>
+        <div className="hero-content">
+          <h1>IT'S TIME TO HARVEST NATURE</h1>
+          <h2>SAVE RAIN, SAVE TOMORROW</h2>
+          <p>
+            Discover innovative rainwater conservation methods. Learn how small changes can make a big impact on your future.
+          </p>
+          <div className="hero-cta">
+            <Link to="/input" className="btn btn-outline">
+              Get Started
+            </Link>
+            <Link to="/analysis" className="btn btn-outline">
+              View Analysis
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="card">
-        <h2>Key Features</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-          <div>
+      <section className="features-section">
+        <h2 className="section-title">Key Features</h2>
+        <div className="features-carousel">
+          <div className="feature-card">
+            <span className="material-icons feature-icon">calculate</span>
             <h3>Real-Time Calculations</h3>
-            <p>Input your roof area, outflow, location, and tank capacity to receive precise inflow calculations and usage recommendations.</p>
+            <p>Get precise inflow calculations and smart recommendations based on your system parameters.</p>
           </div>
-          <div>
+          <div className="feature-card">
+            <span className="material-icons feature-icon">cloud</span>
             <h3>Weather Integration</h3>
-            <p>Automatically fetch real-time rainfall predictions based on your location using the OpenWeatherMap API.</p>
+            <p>Access real-time rainfall predictions using advanced weather APIs.</p>
           </div>
-          <div>
+          <div className="feature-card">
+            <span className="material-icons feature-icon">warning</span>
             <h3>Leak Detection</h3>
-            <p>Compare inflow vs. outflow to detect abnormal losses and receive smart alerts with inspection recommendations.</p>
+            <p>Smart alerts for abnormal water losses and maintenance recommendations.</p>
           </div>
-          <div>
+          <div className="feature-card">
+            <span className="material-icons feature-icon">savings</span>
             <h3>ROI Calculation</h3>
-            <p>Calculate your return on investment based on water saved, local water costs, and system setup/maintenance expenses.</p>
+            <p>Track your savings and calculate system return on investment.</p>
           </div>
-          <div>
+          <div className="feature-card">
+            <span className="material-icons feature-icon">smart_toy</span>
             <h3>AI-Based Optimization</h3>
-            <p>Receive intelligent recommendations for water usage allocation between drinking, cleaning, and gardening.</p>
+            <p>Get intelligent water usage recommendations for different purposes.</p>
           </div>
-          <div>
+          <div className="feature-card">
+            <span className="material-icons feature-icon">bar_chart</span>
             <h3>Visual Reports</h3>
-            <p>View comprehensive graphs and charts to gain insights into your water usage patterns and system performance.</p>
+            <p>Comprehensive analytics with interactive charts and graphs.</p>
           </div>
         </div>
       </section>
 
-      <section className="card">
-        <h2>How It Works</h2>
-        <ol style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
-          <li>Enter your system parameters in the <Link to="/input">Input page</Link>.</li>
-          <li>The system fetches real-time weather data for your location.</li>
-          <li>Our algorithms calculate optimal water usage, detect potential leaks, and generate maintenance schedules.</li>
-          <li>View your results and recommendations in the <Link to="/results">Results page</Link>.</li>
-          <li>Track historical performance and trends in the <Link to="/analysis">Analysis page</Link>.</li>
-          <li>Customize your preferences in the <Link to="/settings">Settings page</Link>.</li>
-        </ol>
+      <section className="how-it-works">
+        <div className="steps-container">
+          <h2>How It Works</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="step-number">1</span>
+              <div>
+                <h3>Input Your Data</h3>
+                <p>Enter your system parameters in the <Link to="/input">Input page</Link>.</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="step-number">2</span>
+              <div>
+                <h3>Weather Analysis</h3>
+                <p>Our system fetches real-time weather data for your location.</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="step-number">3</span>
+              <div>
+                <h3>Smart Calculations</h3>
+                <p>Advanced algorithms optimize water usage and detect potential issues.</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="step-number">4</span>
+              <div>
+                <h3>View Results</h3>
+                <p>Get detailed insights and recommendations in the <Link to="/results">Results page</Link>.</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span className="step-number">5</span>
+              <div>
+                <h3>Track Progress</h3>
+                <p>Monitor performance trends in the <Link to="/analysis">Analysis page</Link>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );
