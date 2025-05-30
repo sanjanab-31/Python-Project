@@ -1,29 +1,36 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import '../styles/Navbar.css';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  };
+
   return (
     <nav className="navbar">
-      <div className="container navbar-container">
-        <NavLink to="/" className="navbar-logo">
-          Smart Rainwater Harvester
-        </NavLink>
-        <div className="navbar-links">
-          <NavLink to="/" className={({ isActive }) => isActive ? "navbar-link active" : "navbar-link"}>
-            Home
-          </NavLink>
-          <NavLink to="/input" className={({ isActive }) => isActive ? "navbar-link active" : "navbar-link"}>
-            Input
-          </NavLink>
-          <NavLink to="/results" className={({ isActive }) => isActive ? "navbar-link active" : "navbar-link"}>
-            Results
-          </NavLink>
-          <NavLink to="/analysis" className={({ isActive }) => isActive ? "navbar-link active" : "navbar-link"}>
-            Analysis
-          </NavLink>
-          <NavLink to="/settings" className={({ isActive }) => isActive ? "navbar-link active" : "navbar-link"}>
-            Settings
-          </NavLink>
+      <div className="navbar-container">
+        <Link to="/" className="navbar-brand">
+          <span>RAINWATER</span>
+          <span style={{ display: 'block', fontSize: '1.5rem' }}>HARVESTER</span>
+        </Link>
+        <div className="nav-links">
+          <Link to="/">Home</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/input">Input</Link>
+              <Link to="/analysis">Analysis</Link>
+              <Link to="/results">Results</Link>
+              <Link to="/settings">Settings</Link>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </>
+          ) : (
+            <Link to="/login" className="login-link">Login</Link>
+          )}
         </div>
       </div>
     </nav>

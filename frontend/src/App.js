@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -16,14 +18,35 @@ function App() {
         <Navbar />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/input" element={<InputPage />} />
-            <Route path="/results" element={<ResultsPage />} />
-            <Route path="/analysis" element={<AnalysisPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/" element={
+              <>
+                <HomePage />
+                <Footer />
+              </>
+            } />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/input" element={
+              <ProtectedRoute>
+                <InputPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/results" element={
+              <ProtectedRoute>
+                <ResultsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/analysis" element={
+              <ProtectedRoute>
+                <AnalysisPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
-        <Footer />
       </div>
     </Router>
   );

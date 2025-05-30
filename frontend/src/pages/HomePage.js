@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import backgroundImage from '../assets/istockphoto-1257951336-612x612.jpg';
 import '../styles/HomePage.css';
 // Add Material Icons CSS
 import '@fontsource/material-icons';
@@ -7,7 +8,7 @@ import '@fontsource/material-icons';
 const HomePage = () => {
   return (
     <div className="container">
-      <section className="hero-section">
+      <section className="hero-section" style={{ backgroundImage: `url(${backgroundImage})` }}>
         <div className="hero-overlay"></div>
         <div className="hero-content">
           <h1>IT'S TIME TO HARVEST NATURE</h1>
